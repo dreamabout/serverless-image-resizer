@@ -73,7 +73,6 @@ exports.handler = function (event, context, callback) {
     resizeFunc = async (data) => {
       const image = Sharp(data.Body);
       const metadata = await image.metadata();
-      console.log("Image metadata", metadata, metadata.background);
       image
         .resize(width || null, height || null, {
           fit: 'contain',
@@ -84,7 +83,6 @@ exports.handler = function (event, context, callback) {
             alpha: (metadata.hasAlpha ? 0 : 1)
           }
         })
-      ;
 
       return image.toBuffer({resolveWithObject: true});
     }
