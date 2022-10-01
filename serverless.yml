@@ -1,0 +1,34 @@
+service: dreamabout-image-resizer
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  region: eu-west-1
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action:
+            - "s3:GetObject"
+          Resource: "arn:aws:s3:::static.getdreamshop.dk/*"
+        - Effect: "Allow"
+          Action:
+            - "s3:PutObject"
+          Resource: "arn:aws:s3:::static.getdreamshop.dk/*"
+functions:
+  resize:
+    handler: src/handlers/resizer/index.handler
+    events:
+      - httpApi: '*'
+    environment:
+      # Provide your bucket name here
+      BUCKET: static.getdreamshop.dk
+      REGION: eu-west-1
+      STAGE: ${sls:stage}
+      URL: https://static.getdreamshop.dk/
+package:
+  patterns:
+    - "src/"
+    - 'node_modules/'

@@ -1,0 +1,12 @@
+{
+  "name": "@dreamabout/image-resizer-serverless",
+  "version": "1.0.0",
+  "main": "handler.js",
+  "license": "MIT",
+  "dependencies": {
+    "sharp": "^0.31.1"
+  },
+  "devDependencies": {
+    "aws-sdk": "^2.1227.0"
+  }
+}
