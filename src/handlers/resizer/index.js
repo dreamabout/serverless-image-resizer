@@ -10,9 +10,8 @@ const BUCKET = process.env.BUCKET;
 const URL = process.env.URL;
 exports.handler = function (event, context, callback) {
   let regexp = new RegExp(
-    '^/?(\\d{1,3})/((\\d{1})?/?)(images/)?(products|blocks)/(\\d{1,4}[.\\d]{0,2})/(\\d{1,4}[.\\d]{0,2})/([\\w\\.\\-]+)$', "i"
+    '^/?(?<shopId>\\d{1,3})(-(?<group>[\\w]+))?/((?<version>\\d{1})?/?)(images/)?(?<folder>products|blocks)/(?<width>\\d{1,4}[.\\d]{0,2})/(?<height>\\d{1,4}[.\\d]{0,2})/(?<path>[\\w\\.\\-]+)$', "i"
   );
-  console.log(event);
   const maxAge = 90 * 24 * 60 * 60;
   const key = event.queryStringParameters.key;
   let originalKey = '';
@@ -21,7 +20,7 @@ exports.handler = function (event, context, callback) {
   const redirectKey = key.replace(/^\/*/, '');
   console.log({"msg": "Seeing if it matches resize request", key, match, regexp});
   if (match === null) {
-    regexp = new RegExp("^/?(\\d{1,3})/files/(\\d{1,3})/([\\w\\.\\-]+)$");
+    regexp = new RegExp("^/?(\\d{1,3})(-(?<format>[\w]+))/files/(\\d{1,3})/([\\w\\.\\-]+)$");
     match = key.match(regexp);
     if (match === null) {
       regexp = new RegExp("^/?(\\d{1,3})/images/([^/]+)/([\\w\\.\\-]+)$");
@@ -57,15 +56,21 @@ exports.handler = function (event, context, callback) {
         callback(err);
       });
   }
-  let width = parseInt(match[6], 10);
-  let height = parseInt(match[7], 10);
+  let width = parseInt(match.groups.width, 10);
+  let height = parseInt(match.groups.height, 10);
   if (width === 0 && height === 0) {
     width = 2560;
   }
-  const path = match[8];
-  const folder = match[5];
+  let path = match.groups.path;
+  let pathParts = path.split('.');
+  let format = pathParts[pathParts.length - 1];
+  if (pathParts.length > 2) {
+    format = pathParts.pop();
+    path = pathParts.join('.');
+  }
+  const folder = match.groups.folder;
   originalKey = "catalog/" + folder + "/images/" + path;
-  let version = parseInt(match[2] || 1, 10);
+  let version = parseInt(match.groups.version || 1, 10);
   let resizeFunc = async (data) => {
     return Sharp(data.Body).resize(width || null, height || null).toBuffer({resolveWithObject: true});
   }
@@ -73,7 +78,13 @@ exports.handler = function (event, context, callback) {
     resizeFunc = async (data) => {
       const image = Sharp(data.Body);
       const metadata = await image.metadata();
-      image
+      let formatOptions = {};
+      switch (format) {
+        case 'png':
+        case 'jpg':
+          formatOptions = {progressive: true};
+      }
+      return image
         .resize(width || null, height || null, {
           fit: 'contain',
           background: {
@@ -83,11 +94,10 @@ exports.handler = function (event, context, callback) {
             alpha: (metadata.hasAlpha ? 0 : 1)
           }
         })
-
-      return image.toBuffer({resolveWithObject: true});
+        .toFormat(format, formatOptions).toBuffer({resolveWithObject: true});
     }
   }
-  console.log({version, path, folder, width, height, originalKey});
+  console.log({version, path, folder, width, height, originalKey, format, matchGroups: match.groups});
   S3.getObject({Bucket: BUCKET, Key: originalKey}).promise()
     .then(resizeFunc)
     .then(buffer => S3.putObject({
