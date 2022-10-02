@@ -19,6 +19,8 @@ provider:
           Resource: "arn:aws:s3:::static.getdreamshop.dk/*"
 functions:
   resize:
+    memorySize: 1024 # in megabytes
+    timeout: 20 # optional, in seconds, default is 6
     handler: src/handlers/resizer/index.handler
     events:
       - httpApi: '*'
