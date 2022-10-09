@@ -20,7 +20,7 @@ provider:
 functions:
   resize:
     memorySize: 1024 # in megabytes
-    timeout: 20 # optional, in seconds, default is 6
+    timeout: 60 # optional, in seconds, default is 6
     handler: src/handlers/resizer/index.handler
     events:
       - httpApi: '*'
@@ -30,6 +30,7 @@ functions:
       REGION: eu-west-1
       STAGE: ${sls:stage}
       URL: https://static.getdreamshop.dk/
+      DEBUG: true
 package:
   patterns:
     - "src/"
