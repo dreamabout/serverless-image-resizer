@@ -16,13 +16,18 @@ function getResizeFunc(version, format, width, height, fit = 'contain', resizeOp
     case 3:
       return async (data) => {
         const image = Sharp(data.Body);
-        const metadata = await image.metadata();
+        let alpha = 1;
+        if(false) {
+          const metadata = await image.metadata();
+          alpha = (metadata.hasAlpha ? 0 : 1);
+        }
+        
         let formatOptions = {};
         let background = {
           r: 255,
           g: 255,
           b: 255,
-          alpha: (metadata.hasAlpha ? 0 : 1)
+          alpha: alpha
         };
         let flattenedBackground = {background: '#FFFFFF'};
         switch (format) {
