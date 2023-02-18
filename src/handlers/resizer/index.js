@@ -9,7 +9,7 @@ const Sharp = require('sharp');
 const BUCKET = process.env.BUCKET;
 const URL = process.env.URL;
 
-function getResizeFunc(version, format, width, height, fit = 'contain', resizeOptions = {}) {
+function getResizeFunc(version, format, width, height, fit = 'contain', resizeOptions = {}, keepAlpha = false) {
   switch (version) {
     default:
     case 2:
@@ -17,7 +17,7 @@ function getResizeFunc(version, format, width, height, fit = 'contain', resizeOp
       return async (data) => {
         const image = Sharp(data.Body);
         let alpha = 1;
-        if(false) {
+        if(keepAlpha) {
           const metadata = await image.metadata();
           alpha = (metadata.hasAlpha ? 0 : 1);
         }
@@ -42,6 +42,15 @@ function getResizeFunc(version, format, width, height, fit = 'contain', resizeOp
             }
             formatOptions = {progressive: true, mozjpeg: true};
         }
+        if (keepAlpha) {
+          return image
+          .resize(width || null, height || null, Object.assign({}, {
+            fit: fit,
+            background: background,
+            fastShrinkOnLoad: false,
+          }, resizeOptions))
+          .toFormat(format, formatOptions).toBuffer({resolveWithObject: true});
+        } 
         return image
           .resize(width || null, height || null, Object.assign({}, {
             fit: fit,
@@ -69,13 +78,14 @@ exports.handler = function (event, context, callback) {
   );
   const maxAge = 90 * 24 * 60 * 60;
   const key = event.queryStringParameters.key;
+  const keepAlpha = event.queryStringParameters.keepAlpha || false;
   let originalKey = '';
   let match = key.match(regexp);
   let ContentType = '';
   const redirectKey = key.replace(/^\/*/, '');
   debug({"msg": "Seeing if it matches resize request", key, match, regexp})
   if (match === null) {
-    regexp = new RegExp("^/?(?<shopId>\\d{1,3})(-(?<group>[\\w]+))?/files/(?<fileId>\\d{1,3})/([\\w\\.\\-]+)$");
+    regexp = new RegExp("^/?(?<shopId>\\d{1,3})(-(?<group>[\\w]+))?/files/(?<fileId>\\d{1,3})/(?<path>[\\w\\.\\-]+)$");
     match = key.match(regexp);
     if (match === null) {
       regexp = new RegExp("^/?(?<shopId>\\d{1,3})(-(?<group>[\\w]+))?/((?<version>\\d{1})?/?)images/(?<folder>[^/]+)/(?<path>[\\w\\.\\-]+)$");
@@ -89,7 +99,7 @@ exports.handler = function (event, context, callback) {
       }
       let version = match.groups.version || 0;
       let width = 2000;
-      let resizeFunc = getResizeFunc(version, format, width, 0, 'inside', {withoutEnlargement: true});
+      let resizeFunc = getResizeFunc(version, format, width, 0, 'inside', {withoutEnlargement: true}, keepAlpha);
       originalKey = "catalog/" + match.groups.folder + "/images/" + path;
       return S3.getObject({Bucket: BUCKET, Key: originalKey}).promise()
         .then(resizeFunc)
