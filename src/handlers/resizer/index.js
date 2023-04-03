@@ -9,19 +9,19 @@ const Sharp = require('sharp');
 const BUCKET = process.env.BUCKET;
 const URL = process.env.URL;
 
-function getResizeFunc(version, format, width, height, fit = 'contain', resizeOptions = {}, keepAlpha = false) {
+function getResizeFunc(version, format, width, height, fit = 'contain', resizeOptions = {}, keepAlpha = false, isAnimated = true) {
   switch (version) {
     default:
     case 2:
     case 3:
       return async (data) => {
-        const image = Sharp(data.Body);
+        const image = Sharp(data.Body, {animated: isAnimated});
         let alpha = 1;
-        if(keepAlpha) {
+        if (keepAlpha) {
           const metadata = await image.metadata();
           alpha = (metadata.hasAlpha ? 0 : 1);
         }
-        
+
         let formatOptions = {};
         let background = {
           r: 255,
@@ -44,13 +44,13 @@ function getResizeFunc(version, format, width, height, fit = 'contain', resizeOp
         }
         if (keepAlpha) {
           return image
-          .resize(width || null, height || null, Object.assign({}, {
-            fit: fit,
-            background: background,
-            fastShrinkOnLoad: false,
-          }, resizeOptions))
-          .toFormat(format, formatOptions).toBuffer({resolveWithObject: true});
-        } 
+            .resize(width || null, height || null, Object.assign({}, {
+              fit: fit,
+              background: background,
+              fastShrinkOnLoad: false,
+            }, resizeOptions))
+            .toFormat(format, formatOptions).toBuffer({resolveWithObject: true});
+        }
         return image
           .resize(width || null, height || null, Object.assign({}, {
             fit: fit,
