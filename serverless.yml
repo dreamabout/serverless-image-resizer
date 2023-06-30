@@ -29,7 +29,7 @@ functions:
       BUCKET: static.getdreamshop.dk
       REGION: eu-west-1
       STAGE: ${sls:stage}
-      URL: https://static.getdreamshop.dk/
+      URL: https://s3.eu-west-1.amazonaws.com/static.getdreamshop.dk/
       DEBUG: true
 package:
   patterns:
