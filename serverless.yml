@@ -4,7 +4,7 @@ frameworkVersion: '3'
 
 provider:
   name: aws
-  runtime: nodejs14.x
+  runtime: nodejs20.x
   region: eu-west-1
   iam:
     role:
@@ -19,7 +19,7 @@ provider:
           Resource: "arn:aws:s3:::static.getdreamshop.dk/*"
 functions:
   resize:
-    memorySize: 1024 # in megabytes
+    memorySize: 1536 # in megabytes
     timeout: 60 # optional, in seconds, default is 6
     handler: src/handlers/resizer/index.handler
     events:
@@ -31,6 +31,7 @@ functions:
       STAGE: ${sls:stage}
       URL: https://s3.eu-west-1.amazonaws.com/static.getdreamshop.dk/
       DEBUG: true
+  on-product-upload:  ${file(./serverless/${sls:stage}/onProductUpload.yml)}
 package:
   patterns:
     - "src/"

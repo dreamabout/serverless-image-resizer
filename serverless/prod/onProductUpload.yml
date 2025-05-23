@@ -1,0 +1,18 @@
+memorySize: 1536 # in megabytes
+timeout: 180 # optional, in seconds, default is 6
+handler: src/handlers/resizer/index.onProductImageUpload
+events: 
+ - s3:
+    bucket: static.getdreamshop.dk
+    event: s3:ObjectCreated:*
+    rules:
+      - prefix: catalog/products/
+    existing: true
+    forceDeploy: true
+environment:
+  # Provide your bucket name here
+  BUCKET: static.getdreamshop.dk
+  REGION: eu-west-1
+  STAGE: ${sls:stage}
+  DEBUG: true
+  FORMAT: "avif"

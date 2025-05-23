@@ -4,9 +4,10 @@
   "main": "handler.js",
   "license": "MIT",
   "dependencies": {
-    "sharp": "^0.31.1"
+    "aws-sdk": "^2.1227.0",
+    "sharp": "^0.34.2"
   },
-  "devDependencies": {
-    "aws-sdk": "^2.1227.0"
+  "volta": {
+    "node": "20.19.2"
   }
 }

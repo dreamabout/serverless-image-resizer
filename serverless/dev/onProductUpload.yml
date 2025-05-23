@@ -1,0 +1,11 @@
+memorySize: 1536 # in megabytes
+timeout: 120 # optional, in seconds, default is 6
+handler: src/handlers/resizer/index.onProductImageUpload
+events: []
+environment:
+  # Provide your bucket name here
+  BUCKET: static.getdreamshop.dk
+  REGION: eu-west-1
+  STAGE: ${sls:stage}
+  DEBUG: true
+  FORMAT: "avif"
